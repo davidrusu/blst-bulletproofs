@@ -5,8 +5,9 @@ extern crate alloc;
 
 use alloc::vec;
 use alloc::vec::Vec;
+use blstrs::Scalar;
 use clear_on_drop::clear::Clear;
-use curve25519_dalek::scalar::Scalar;
+use group::ff::Field;
 
 use crate::inner_product_proof::inner_product;
 
@@ -257,7 +258,8 @@ pub fn sum_of_powers(x: &Scalar, n: usize) -> Scalar {
 
 // takes the sum of all of the powers of x, up to n
 fn sum_of_powers_slow(x: &Scalar, n: usize) -> Scalar {
-    exp_iter(*x).take(n).sum()
+    // todo: replace fold() with sum() when supported in blstrs
+    exp_iter(*x).take(n).fold(Scalar::zero(), |sum, x| sum + x)
 }
 
 /// Given `data` with `len >= 32`, return the first 32 bytes.
@@ -265,6 +267,13 @@ pub fn read32(data: &[u8]) -> [u8; 32] {
     let mut buf32 = [0u8; 32];
     buf32[..].copy_from_slice(&data[..32]);
     buf32
+}
+
+/// Given `data` with `len >= 48`, return the first 48 bytes.
+pub fn read48(data: &[u8]) -> [u8; 48] {
+    let mut buf48 = [0u8; 48];
+    buf48[..].copy_from_slice(&data[..48]);
+    buf48
 }
 
 #[cfg(test)]
@@ -309,9 +318,9 @@ mod tests {
 
     #[test]
     fn test_scalar_exp() {
-        let x = Scalar::from_bits(
-            *b"\x84\xfc\xbcOx\x12\xa0\x06\xd7\x91\xd9z:'\xdd\x1e!CE\xf7\xb1\xb9Vz\x810sD\x96\x85\xb5\x07",
-        );
+        let x = Scalar::from_bytes_le(
+            b"\x84\xfc\xbcOx\x12\xa0\x06\xd7\x91\xd9z:'\xdd\x1e!CE\xf7\xb1\xb9Vz\x810sD\x96\x85\xb5\x07",
+        ).unwrap();
         assert_eq!(scalar_exp_vartime(&x, 0), Scalar::one());
         assert_eq!(scalar_exp_vartime(&x, 1), x);
         assert_eq!(scalar_exp_vartime(&x, 2), x * x);

@@ -1,9 +1,10 @@
-use rand_core::SeedableRng;
+use rand::SeedableRng;
 
 use rand_chacha::ChaChaRng;
 
-use curve25519_dalek::ristretto::CompressedRistretto;
-use curve25519_dalek::scalar::Scalar;
+use group::ff::Field;
+
+use blstrs::Scalar;
 
 use merlin::Transcript;
 
@@ -11,6 +12,7 @@ use bulletproofs::{BulletproofGens, PedersenGens, RangeProof};
 
 use hex;
 
+/*
 // Tests that proofs generated with v1.0.0 continue to verify in later versions.
 #[test]
 fn deserialize_and_verify() {
@@ -93,6 +95,7 @@ fn deserialize_and_verify() {
         }
     }
 }
+*/
 
 // This function generates test vectors and dumps them to stdout.
 // It can be run by uncommenting the #[test] annotation.
@@ -129,7 +132,7 @@ fn generate_test_vectors() {
             println!("proof = \"{}\"", hex::encode(proof.to_bytes()));
             println!("vc = [");
             for com in &value_commitments {
-                println!("    \"{}\"", hex::encode(com.as_bytes()));
+                println!("    \"{}\"", hex::encode(com.to_compressed()));
             }
             println!("]\n");
         }
